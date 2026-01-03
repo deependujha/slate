@@ -49,7 +49,7 @@ const data = {
     {
       title: "Playground",
       url: "#",
-      icon: SquareTerminal,
+      icon: Frame,
       isActive: true,
       items: [
         {
@@ -69,7 +69,7 @@ const data = {
     {
       title: "Models",
       url: "#",
-      icon: Bot,
+      icon: Frame,
       items: [
         {
           title: "Genesis",
@@ -88,7 +88,7 @@ const data = {
     {
       title: "Documentation",
       url: "#",
-      icon: BookOpen,
+      icon: Frame,
       items: [
         {
           title: "Introduction",
@@ -111,7 +111,7 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
+      icon: Frame,
       items: [
         {
           title: "General",
