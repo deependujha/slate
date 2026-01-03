@@ -51,7 +51,7 @@ const MODAL_TITLE: Record<ModalAction, string> = {
 /* Component                          */
 /* ---------------------------------- */
 
-export function NavMain( { items }: { items: SidebarItem[] } ) {
+export function NavMain( { items, workspaceId, moduleId, pageId }: { items: SidebarItem[]; workspaceId: string; moduleId: string; pageId: string } ) {
   const [ isModalOpen, setIsModalOpen ] = useState( false );
   const [ activeAction, setActiveAction ] = useState<ModalAction | null>( null );
 
@@ -149,11 +149,11 @@ export function NavMain( { items }: { items: SidebarItem[] } ) {
         title={ activeAction ? MODAL_TITLE[ activeAction ] : "" }
       >
         { activeAction === "create_module" && (
-          <CreateNewModuleComponent closeModal={ () => setIsModalOpen( false ) } />
+          <CreateNewModuleComponent closeModal={ () => setIsModalOpen( false ) } workspaceId={ workspaceId } />
         ) }
 
         { activeAction === "create_page" && (
-          <CreateNewPageComponent closeModal={ () => setIsModalOpen( false ) } />
+          <CreateNewPageComponent closeModal={ () => setIsModalOpen( false ) } moduleId={ moduleId } />
         ) }
       </SlateModal>
     </>

@@ -3,61 +3,94 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
-export const CreateNewModuleComponent = ( {
-    closeModal,
+export const CreateNewModuleComponent = ({
+	closeModal,
+	workspaceId,
 }: {
-    closeModal: () => void;
-} ) => {
-    const [ moduleName, setModuleName ] = useState( "" );
+	closeModal: () => void;
+	workspaceId: string;
+}) => {
+	const [moduleName, setModuleName] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 
-    const handleCreateModule = async () => {
-        if ( !moduleName.trim() ) return;
+	const handleCreateModule = async () => {
+		const newModuleName = moduleName.trim();
+		if (!newModuleName || isLoading) return;
 
-        console.log( "Creating module:", moduleName );
-        closeModal();
-    };
+		setIsLoading(true);
 
-    const handleKeyDown = ( e: React.KeyboardEvent ) => {
-        if ( e.key === "Enter" ) {
-            e.preventDefault();
-            handleCreateModule();
-        }
+		try {
+			const res = await fetch("/api/modules", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					workspaceId,
+					newModuleName,
+				}),
+			});
 
-        if ( e.key === "Escape" ) {
-            e.preventDefault();
-            closeModal();
-        }
-    };
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error || "Failed to create module");
+			}
 
-    return (
-        <div
-            className="space-y-4"
-            onKeyDown={ handleKeyDown }
-        >
-            <Input
-                autoFocus
-                value={ moduleName }
-                onChange={ ( e ) => setModuleName( e.target.value ) }
-                placeholder="Module name"
-            />
+			toast.success(`Module created: ${newModuleName}`);
+			closeModal();
+		} catch (error) {
+			console.error(error);
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Something went wrong"
+			);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-            <div className="flex justify-end gap-2">
-                <Button
-                    variant="ghost"
-                    onClick={ closeModal }
-                    className="text-muted-foreground"
-                >
-                    Cancel
-                </Button>
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleCreateModule();
+		}
 
-                <Button
-                    onClick={ handleCreateModule }
-                    disabled={ !moduleName.trim() }
-                >
-                    Create module
-                </Button>
-            </div>
-        </div>
-    );
+		if (e.key === "Escape") {
+			e.preventDefault();
+			closeModal();
+		}
+	};
+
+	return (
+		<div className="space-y-4" onKeyDown={handleKeyDown}>
+			<Input
+				autoFocus
+				value={moduleName}
+				onChange={(e) => setModuleName(e.target.value)}
+				placeholder="Module name"
+				disabled={isLoading}
+			/>
+
+			<div className="flex justify-end gap-2">
+				<Button
+					variant="ghost"
+					onClick={closeModal}
+					className="text-muted-foreground"
+					disabled={isLoading}
+				>
+					Cancel
+				</Button>
+
+				<Button
+					onClick={handleCreateModule}
+					disabled={!moduleName.trim() || isLoading}
+				>
+					{isLoading ? "Creating…" : "Create module"}
+				</Button>
+			</div>
+		</div>
+	);
 };

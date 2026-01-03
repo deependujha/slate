@@ -3,25 +3,60 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export const CreateNewPageComponent = ( {
     closeModal,
+    moduleId,
 }: {
     closeModal: () => void;
+    moduleId: string;
 } ) => {
     const [ pageName, setPageName ] = useState( "" );
+    const [ isLoading, setIsLoading ] = useState( false );
 
-    const handleCreatePage = async () => {
-        if ( !pageName.trim() ) return;
+    const handleCreateModule = async () => {
+        const newPageName = pageName.trim();
+        if ( !newPageName || isLoading ) return;
 
-        console.log( "Creating page:", pageName );
-        closeModal();
+        setIsLoading( true );
+
+        try {
+            const res = await fetch( "/api/pages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify( {
+                    moduleId,
+                    newPageName,
+                    type: "TABLE",
+                } ),
+            } );
+
+            if ( !res.ok ) {
+                const data = await res.json().catch( () => ( {} ) );
+                throw new Error( data.error || "Failed to create module" );
+            }
+
+            toast.success( `Page created: ${newPageName}` );
+            closeModal();
+        } catch ( error ) {
+            console.error( error );
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong"
+            );
+        } finally {
+            setIsLoading( false );
+        }
     };
 
     const handleKeyDown = ( e: React.KeyboardEvent ) => {
         if ( e.key === "Enter" ) {
             e.preventDefault();
-            handleCreatePage();
+            handleCreateModule();
         }
 
         if ( e.key === "Escape" ) {
@@ -31,15 +66,13 @@ export const CreateNewPageComponent = ( {
     };
 
     return (
-        <div
-            className="space-y-4"
-            onKeyDown={ handleKeyDown }
-        >
+        <div className="space-y-4" onKeyDown={ handleKeyDown }>
             <Input
                 autoFocus
                 value={ pageName }
                 onChange={ ( e ) => setPageName( e.target.value ) }
                 placeholder="Page name"
+                disabled={ isLoading }
             />
 
             <div className="flex justify-end gap-2">
@@ -47,15 +80,16 @@ export const CreateNewPageComponent = ( {
                     variant="ghost"
                     onClick={ closeModal }
                     className="text-muted-foreground"
+                    disabled={ isLoading }
                 >
                     Cancel
                 </Button>
 
                 <Button
-                    onClick={ handleCreatePage }
-                    disabled={ !pageName.trim() }
+                    onClick={ handleCreateModule }
+                    disabled={ !pageName.trim() || isLoading }
                 >
-                    Create page
+                    { isLoading ? "Creating…" : "Create page" }
                 </Button>
             </div>
         </div>

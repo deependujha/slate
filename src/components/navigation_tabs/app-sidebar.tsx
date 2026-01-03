@@ -153,13 +153,17 @@ const data = {
 
 
 export function AppSidebar( { ...props }: React.ComponentProps<typeof Sidebar> ) {
+  const [ workspaceId, setWorkspaceId ] = React.useState( null );
+  const [ moduleId, setModuleId ] = React.useState( null );
+  const [ pageId, setPageId ] = React.useState( null );
+
   return (
     <Sidebar collapsible="icon" { ...props }>
       <SidebarHeader>
         <TeamSwitcher teams={ data.teams } />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={ data.navMain } />
+        <NavMain items={ data.navMain } workspaceId="cmjytmxnz0001pc0748n2jwdj" moduleId="cmjytmyhp0003pc0736hsearn" pageId="cmjytmyrk0004pc07kw63l94m" />
         <NavProjects projects={ data.projects } />
       </SidebarContent>
       <SidebarFooter>
