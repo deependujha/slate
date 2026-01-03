@@ -1,39 +1,39 @@
 <svg
-  width="128"
-  height="128"
-  viewBox="0 0 128 128"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
+	width="64"
+	height="64"
+	viewBox="0 0 64 64"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
 >
-  <rect
-    x="0"
-    y="0"
-    width="128"
-    height="128"
-    rx="32"
-    fill="#F5F5F5"
-  />
+	<!-- Outer slate (icon boundary) -->
+	<!-- <rect
+		x="4"
+		y="4"
+		width="56"
+		height="56"
+		rx="12"
+		fill="#F9FAFB"
+		stroke="#111827"
+		stroke-width="2"
+	/> -->
 
-  <path
-    d="M24 70 H42 L50 54 L60 86 L70 42 L80 78 L90 70 H104"
-    stroke="url(#slateGradient)"
-    stroke-width="6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+	<!-- Paper -->
+	<rect
+		x="16"
+		y="12"
+		width="32"
+		height="40"
+		rx="6"
+		fill="#FFFFFF"
+		stroke="#111827"
+		stroke-width="2"
+	/>
 
-  <defs>
-    <linearGradient
-      id="slateGradient"
-      x1="24"
-      y1="70"
-      x2="104"
-      y2="70"
-      gradientUnits="userSpaceOnUse"
-    >
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="50%" stop-color="#EC4899" />
-      <stop offset="100%" stop-color="#F97316" />
-    </linearGradient>
-  </defs>
+	<!-- Pen stroke -->
+	<path
+		d="M30 40 L56 25"
+		stroke="#ff0000"
+		stroke-width="4"
+		stroke-linecap="round"
+	/>
 </svg>
