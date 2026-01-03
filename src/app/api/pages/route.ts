@@ -2,16 +2,26 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/prisma/connection";
 import { getAuthenticatedUser } from "@/app/api/auth";
 import { PageType } from "@/generated/prisma/client";
+import { getServerSession } from "next-auth";
+import { AuthOptions } from "../authoptions";
 
 export async function POST(req: Request) {
 	try {
+		const session = await getServerSession(AuthOptions);
+		if (!session?.user?.email) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
 		const user = await getAuthenticatedUser();
 		const body = await req.json();
 
 		const { moduleId, newPageName, type } = body;
 
 		if (!moduleId || !newPageName?.trim() || !type) {
-			return NextResponse.json({ error: "moduleId, newPageName and type are required" }, { status: 400 });
+			return NextResponse.json(
+				{ error: "moduleId, newPageName and type are required" },
+				{ status: 400 },
+			);
 		}
 
 		if (!Object.values(PageType).includes(type)) {
@@ -63,5 +73,50 @@ export async function POST(req: Request) {
 	} catch (error) {
 		console.error(error);
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+	}
+}
+
+export async function DELETE(req: Request) {
+	try {
+		const session = await getServerSession(AuthOptions);
+		if (!session?.user?.email) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		const { pageId } = await req.json();
+
+		if (!pageId) {
+			return NextResponse.json({ error: "pageId is required" }, { status: 400 });
+		}
+
+		// Ensure user has access
+		const page = await prisma.page.findFirst({
+			where: {
+				id: pageId,
+				module: {
+					workspace: {
+						members: {
+							some: {
+								user: { email: session.user.email },
+							},
+						},
+					},
+				},
+			},
+			select: { id: true },
+		});
+
+		if (!page) {
+			return NextResponse.json({ error: "Page not found or access denied" }, { status: 404 });
+		}
+
+		await prisma.page.delete({
+			where: { id: pageId },
+		});
+
+		return NextResponse.json({ success: true });
+	} catch (error) {
+		console.error("DELETE PAGE ERROR", error);
+		return NextResponse.json({ error: "Failed to delete page" }, { status: 500 });
 	}
 }

@@ -31,7 +31,7 @@ export const DeleteModuleComponent = ( {
 
 			if ( !res.ok ) {
 				const data = await res.json().catch( () => ( {} ) );
-				throw new Error( data.error || "Failed to create module" );
+				throw new Error( data.error || "Failed to delete module" );
 			}
 
 			toast.success( `Module deleted: ${moduleId}` );

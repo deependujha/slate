@@ -19,7 +19,7 @@ export const DeletePageComponent = ( {
         setIsLoading( true );
 
         try {
-            const res = await fetch( "/api/modules", {
+            const res = await fetch( "/api/pages", {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export const DeletePageComponent = ( {
 
             if ( !res.ok ) {
                 const data = await res.json().catch( () => ( {} ) );
-                throw new Error( data.error || "Failed to create module" );
+                throw new Error( data.error || "Failed to delete page" );
             }
 
             toast.success( `Page deleted: ${pageId}` );
