@@ -35,7 +35,6 @@ export const DeleteModuleComponent = ( {
 			}
 
 			toast.success( `Module deleted: ${moduleId}` );
-			closeModal();
 		} catch ( error ) {
 			console.error( error );
 			toast.error(
@@ -45,6 +44,7 @@ export const DeleteModuleComponent = ( {
 			);
 		} finally {
 			setIsLoading( false );
+			closeModal();
 		}
 	};
 

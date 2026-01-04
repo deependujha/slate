@@ -35,7 +35,6 @@ export const DeletePageComponent = ( {
             }
 
             toast.success( `Page deleted: ${pageId}` );
-            closeModal();
         } catch ( error ) {
             console.error( error );
             toast.error(
@@ -45,6 +44,7 @@ export const DeletePageComponent = ( {
             );
         } finally {
             setIsLoading( false );
+            closeModal();
         }
     };
 
