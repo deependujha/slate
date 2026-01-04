@@ -83,7 +83,7 @@ export function AppSidebar({
 		}
 	}, [userData, activeWorkspaceIdAndName]);
 
-	if (activeWorkspaceIdAndName === null || activeModuleIdAndName === null) {
+	if (activeWorkspaceIdAndName === null) {
 		return null;
 	}
 
