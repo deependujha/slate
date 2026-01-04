@@ -3,87 +3,117 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { EntityIdentifierType, UserDataType } from "@/constants/types";
 
-export const DeletePageComponent = ( {
-    closeModal,
-    pageId,
+export const DeletePageComponent = ({
+	userData,
+	setUserData,
+	activeWorkspaceIdAndName,
+	activeModuleIdAndName,
+	activePageIdAndName,
+	closeModal,
 }: {
-    closeModal: () => void;
-    pageId: string;
-} ) => {
-    const [ isLoading, setIsLoading ] = useState( false );
+	userData: UserDataType;
+	setUserData: React.Dispatch<React.SetStateAction<UserDataType | null>>;
+	activeWorkspaceIdAndName: EntityIdentifierType;
+	activeModuleIdAndName: EntityIdentifierType | null;
+	activePageIdAndName: EntityIdentifierType | null;
+	closeModal: () => void;
+}) => {
+	if (!activeModuleIdAndName) {
+		throw new Error("Active module is null");
+	}
+	if (!activePageIdAndName) {
+		throw new Error("Active page is null");
+	}
 
-    const handleDeletePage = async () => {
-        if ( isLoading ) return;
+	const [isLoading, setIsLoading] = useState(false);
 
-        setIsLoading( true );
+	const handleDeletePage = async () => {
+		if (isLoading) return;
 
-        try {
-            const res = await fetch( "/api/pages", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify( {
-                    pageId,
-                } ),
-            } );
+		setIsLoading(true);
+		const originalUserData = { ...userData };
 
-            if ( !res.ok ) {
-                const data = await res.json().catch( () => ( {} ) );
-                throw new Error( data.error || "Failed to delete page" );
-            }
+		try {
+			/* ----------------------------------
+			 * Optimistic UI update
+			 * ---------------------------------- */
+			const tmpUserData = { ...userData };
 
-            toast.success( `Page deleted: ${pageId}` );
-        } catch ( error ) {
-            console.error( error );
-            toast.error(
-                error instanceof Error
-                    ? error.message
-                    : "Something went wrong"
-            );
-        } finally {
-            setIsLoading( false );
-            closeModal();
-        }
-    };
+			for (const workspace of tmpUserData.workspaces) {
+				if (workspace.id === activeWorkspaceIdAndName.id) {
+					for (const module of workspace.modules) {
+						if (module.id === activeModuleIdAndName.id) {
+							module.pages = module.pages.filter((page) => page.id !== activePageIdAndName.id);
+						}
+					}
+				}
+			}
 
-    const handleKeyDown = ( e: React.KeyboardEvent ) => {
-        if ( e.key === "Enter" ) {
-            e.preventDefault();
-            handleDeletePage();
-        }
+			setUserData(tmpUserData);
+			closeModal();
 
-        if ( e.key === "Escape" ) {
-            e.preventDefault();
-            closeModal();
-        }
-    };
+			/* ----------------------------------
+			 * API call
+			 * ---------------------------------- */
+			const res = await fetch("/api/pages", {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					pageId: activePageIdAndName.id,
+				}),
+			});
 
-    return (
-        <div className="space-y-4" onKeyDown={ handleKeyDown }>
-            <div className="space-y-2 text-md">
-                <p>Are you sure you want to delete this page? This action cannot be undone.</p>
-            </div>
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error || "Failed to delete page");
+			}
+		} catch (error) {
+			console.error(error);
+			toast.error(error instanceof Error ? error.message : "Something went wrong");
 
-            <div className="flex justify-end gap-2">
-                <Button
-                    variant="ghost"
-                    onClick={ closeModal }
-                    className="text-muted-foreground"
-                    disabled={ isLoading }
-                >
-                    Cancel
-                </Button>
+			// rollback
+			setUserData(originalUserData);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-                <Button
-                    className="bg-red-500 hover:bg-red-600 text-white"
-                    onClick={ handleDeletePage }
-                    disabled={ isLoading }
-                >
-                    { isLoading ? "Deleting…" : "Delete page" }
-                </Button>
-            </div>
-        </div>
-    );
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleDeletePage();
+		}
+
+		if (e.key === "Escape") {
+			e.preventDefault();
+			closeModal();
+		}
+	};
+
+	return (
+		<div className="space-y-4" onKeyDown={handleKeyDown}>
+			<div className="flex justify-end gap-2">
+				<Button
+					variant="ghost"
+					onClick={closeModal}
+					className="text-muted-foreground"
+					disabled={isLoading}
+				>
+					Cancel
+				</Button>
+
+				<Button
+					onClick={handleDeletePage}
+					disabled={isLoading}
+					className="bg-red-500 hover:bg-red-600 text-white"
+				>
+					{isLoading ? "Deleting…" : "Delete page"}
+				</Button>
+			</div>
+		</div>
+	);
 };

@@ -3,85 +3,108 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { EntityIdentifierType, UserDataType } from "@/constants/types";
 
-export const DeleteModuleComponent = ( {
+export const DeleteModuleComponent = ({
+	userData,
+	setUserData,
+	activeWorkspaceIdAndName,
+	activeModuleIdAndName,
 	closeModal,
-	moduleId,
 }: {
+	userData: UserDataType;
+	setUserData: React.Dispatch<React.SetStateAction<UserDataType | null>>;
+	activeWorkspaceIdAndName: EntityIdentifierType;
+	activeModuleIdAndName: EntityIdentifierType | null;
 	closeModal: () => void;
-	moduleId: string;
-} ) => {
-	const [ isLoading, setIsLoading ] = useState( false );
+}) => {
+	if (!activeModuleIdAndName) {
+		throw new Error("Active module is null");
+	}
+
+	const [isLoading, setIsLoading] = useState(false);
 
 	const handleDeleteModule = async () => {
-		if ( isLoading ) return;
+		if (isLoading) return;
 
-		setIsLoading( true );
+		setIsLoading(true);
+		const originalUserData = { ...userData };
 
 		try {
-			const res = await fetch( "/api/modules", {
+			/* ----------------------------------
+			 * Optimistic UI update
+			 * ---------------------------------- */
+			const tmpUserData = { ...userData };
+
+			for (const workspace of tmpUserData.workspaces) {
+				if (workspace.id === activeWorkspaceIdAndName.id) {
+					workspace.modules = workspace.modules.filter(
+						(module) => module.id !== activeModuleIdAndName.id,
+					);
+				}
+			}
+
+			setUserData(tmpUserData);
+			closeModal();
+
+			/* ----------------------------------
+			 * API call
+			 * ---------------------------------- */
+			const res = await fetch("/api/modules", {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify( {
-					moduleId,
-				} ),
-			} );
+				body: JSON.stringify({
+					moduleId: activeModuleIdAndName.id,
+				}),
+			});
 
-			if ( !res.ok ) {
-				const data = await res.json().catch( () => ( {} ) );
-				throw new Error( data.error || "Failed to delete module" );
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error || "Failed to delete module");
 			}
+		} catch (error) {
+			console.error(error);
+			toast.error(error instanceof Error ? error.message : "Something went wrong");
 
-			toast.success( `Module deleted: ${moduleId}` );
-		} catch ( error ) {
-			console.error( error );
-			toast.error(
-				error instanceof Error
-					? error.message
-					: "Something went wrong"
-			);
+			// rollback
+			setUserData(originalUserData);
 		} finally {
-			setIsLoading( false );
-			closeModal();
+			setIsLoading(false);
 		}
 	};
 
-	const handleKeyDown = ( e: React.KeyboardEvent ) => {
-		if ( e.key === "Enter" ) {
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
 			e.preventDefault();
 			handleDeleteModule();
 		}
 
-		if ( e.key === "Escape" ) {
+		if (e.key === "Escape") {
 			e.preventDefault();
 			closeModal();
 		}
 	};
 
 	return (
-		<div className="space-y-4" onKeyDown={ handleKeyDown }>
-			<div className="space-y-2 text-md">
-				<p>Are you sure you want to delete this module? This action cannot be undone.</p>
-			</div>
-
+		<div className="space-y-4" onKeyDown={handleKeyDown}>
 			<div className="flex justify-end gap-2">
 				<Button
 					variant="ghost"
-					onClick={ closeModal }
+					onClick={closeModal}
 					className="text-muted-foreground"
-					disabled={ isLoading }
+					disabled={isLoading}
 				>
 					Cancel
 				</Button>
 
 				<Button
+					onClick={handleDeleteModule}
+					disabled={isLoading}
 					className="bg-red-500 hover:bg-red-600 text-white"
-					onClick={ handleDeleteModule }
-					disabled={ isLoading }
 				>
-					{ isLoading ? "Deleting…" : "Delete module" }
+					{isLoading ? "Deleting…" : "Delete module"}
 				</Button>
 			</div>
 		</div>

@@ -4,13 +4,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { EntityIdentifierType, UserDataType } from "@/constants/types";
 
 export const CreateNewModuleComponent = ({
+	userData,
+	setUserData,
+	activeWorkspaceIdAndName,
 	closeModal,
-	workspaceId,
 }: {
+	userData: UserDataType;
+	setUserData: React.Dispatch<React.SetStateAction<UserDataType | null>>;
+	activeWorkspaceIdAndName: EntityIdentifierType;
 	closeModal: () => void;
-	workspaceId: string;
 }) => {
 	const [moduleName, setModuleName] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -21,14 +26,50 @@ export const CreateNewModuleComponent = ({
 
 		setIsLoading(true);
 
+		// IMPORTANT: keep original reference for rollback
+		const originalUserData = userData;
+
+		// temp id for optimistic module
+		const tempModuleId = `temp-id-${Date.now()}`;
+
 		try {
+			/* ----------------------------------
+			 * Optimistic UI update (IMMUTABLE)
+			 * ---------------------------------- */
+			const tmpUserData: UserDataType = {
+				...userData,
+				workspaces: userData.workspaces.map((workspace) => {
+					if (workspace.id !== activeWorkspaceIdAndName.id) {
+						return workspace;
+					}
+
+					return {
+						...workspace,
+						modules: [
+							...workspace.modules,
+							{
+								id: tempModuleId,
+								name: newModuleName,
+								pages: [],
+							},
+						],
+					};
+				}),
+			};
+
+			setUserData(tmpUserData);
+			closeModal();
+
+			/* ----------------------------------
+			 * API call
+			 * ---------------------------------- */
 			const res = await fetch("/api/modules", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					workspaceId,
+					workspaceId: activeWorkspaceIdAndName.id,
 					newModuleName,
 				}),
 			});
@@ -38,15 +79,40 @@ export const CreateNewModuleComponent = ({
 				throw new Error(data.error || "Failed to create module");
 			}
 
-			toast.success(`Module created: ${newModuleName}`);
-			closeModal();
+			const data = await res.json();
+			console.log("Created module:", data);
+			const createdModule = {
+				id: data.id,
+				name: data.name,
+				pages: [],
+			};
+
+			/* ----------------------------------
+			 * Reconcile temp module → real module
+			 * ---------------------------------- */
+			const reconciledUserData: UserDataType = {
+				...tmpUserData,
+				workspaces: tmpUserData.workspaces.map((workspace) => {
+					if (workspace.id !== activeWorkspaceIdAndName.id) {
+						return workspace;
+					}
+
+					return {
+						...workspace,
+						modules: workspace.modules.map((module) =>
+							module.id === tempModuleId ? createdModule : module,
+						),
+					};
+				}),
+			};
+
+			setUserData(reconciledUserData);
 		} catch (error) {
 			console.error(error);
-			toast.error(
-				error instanceof Error
-					? error.message
-					: "Something went wrong"
-			);
+			toast.error(error instanceof Error ? error.message : "Something went wrong");
+
+			// rollback
+			setUserData(originalUserData);
 		} finally {
 			setIsLoading(false);
 		}
@@ -84,10 +150,7 @@ export const CreateNewModuleComponent = ({
 					Cancel
 				</Button>
 
-				<Button
-					onClick={handleCreateModule}
-					disabled={!moduleName.trim() || isLoading}
-				>
+				<Button onClick={handleCreateModule} disabled={!moduleName.trim() || isLoading}>
 					{isLoading ? "Creating…" : "Create module"}
 				</Button>
 			</div>

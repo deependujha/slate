@@ -1,173 +1,113 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import { useEffect, useState } from "react";
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
+	AudioWaveform,
+	BookOpen,
+	Bot,
+	Command,
+	Frame,
+	GalleryVerticalEnd,
+	Map,
+	PieChart,
+	Settings2,
+	SquareTerminal,
+} from "lucide-react";
 
-import { NavMain } from "@/components/navigation_tabs/nav-main"
-import { NavUser } from "@/components/navigation_tabs/nav-user"
-import { TeamSwitcher } from "@/components/navigation_tabs/team-switcher"
+import { NavMain } from "@/components/navigation_tabs/nav-main";
+import { NavUser } from "@/components/navigation_tabs/nav-user";
+import { WorkspaceSwitcher } from "@/components/navigation_tabs/workspace-switcher";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar"
+	Sidebar,
+	SidebarContent,
+	SidebarFooter,
+	SidebarHeader,
+	SidebarRail,
+} from "@/components/ui/sidebar";
+import { EntityIdentifierType, ModulesAndPagesTypes, UserDataType } from "@/constants/types";
 
-// This is sample data.
-const data = {
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: Frame,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Frame,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: Frame,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Frame,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-}
+export function AppSidebar({
+	userData,
+	setUserData,
+	activeWorkspaceIdAndName,
+	setActiveWorkspaceIdAndName,
+	activeModuleIdAndName,
+	setActiveModuleIdAndName,
+	activePageIdAndName,
+	setActivePageIdAndName,
+	...props
+}: {
+	userData: UserDataType;
+	setUserData: React.Dispatch<React.SetStateAction<UserDataType | null>>;
+	activeWorkspaceIdAndName: EntityIdentifierType | null;
+	setActiveWorkspaceIdAndName: React.Dispatch<React.SetStateAction<EntityIdentifierType | null>>;
+	activeModuleIdAndName: EntityIdentifierType | null;
+	setActiveModuleIdAndName: React.Dispatch<React.SetStateAction<EntityIdentifierType | null>>;
+	activePageIdAndName: EntityIdentifierType | null;
+	setActivePageIdAndName: React.Dispatch<React.SetStateAction<EntityIdentifierType | null>>;
+} & React.ComponentProps<typeof Sidebar>) {
+	const [userWorkspacesData, setUserWorkspacesData] = useState<Array<{ name: string; id: string }>>(
+		[],
+	);
+	const [userModulesAndPagesData, setUserModulesAndPagesData] = useState<
+		Array<ModulesAndPagesTypes>
+	>([]);
 
+	useEffect(() => {
+		console.log("updated userData:", userData);
+		const workspaces: Array<{ name: string; id: string }> = [];
+		const modulesAndPages: Array<ModulesAndPagesTypes> = [];
+		for (const workspace of userData?.workspaces || []) {
+			workspaces.push({
+				name: workspace.name,
+				id: workspace.id,
+			});
+		}
 
-export function AppSidebar( { ...props }: React.ComponentProps<typeof Sidebar> ) {
-  const [ workspaceId, setWorkspaceId ] = React.useState( null );
-  const [ moduleId, setModuleId ] = React.useState( null );
-  const [ pageId, setPageId ] = React.useState( null );
+		for (const workspace of userData?.workspaces || []) {
+			if (workspace.id === activeWorkspaceIdAndName?.id) {
+				for (const module of workspace.modules) {
+					modulesAndPages.push({
+						module_id: module.id,
+						name: module.name,
+						pages: module.pages.map((page) => ({
+							page_id: page.id,
+							name: page.title,
+						})),
+					});
+				}
+			}
 
-  return (
-    <Sidebar collapsible="icon" { ...props }>
-      <SidebarHeader>
-        <TeamSwitcher teams={ data.teams } />
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={ data.navMain } workspaceId="cmjytmxnz0001pc0748n2jwdj" moduleId="cmjytmyhp0003pc0736hsearn" pageId="cmjytmyrk0004pc07kw63l94m" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
-  )
+			setUserWorkspacesData(workspaces);
+			setUserModulesAndPagesData(modulesAndPages);
+		}
+	}, [userData, activeWorkspaceIdAndName]);
+
+	if (activeWorkspaceIdAndName === null || activeModuleIdAndName === null) {
+		return null;
+	}
+
+	return (
+		<Sidebar collapsible="icon" {...props}>
+			<SidebarHeader>
+				<WorkspaceSwitcher userWorkspaces={userWorkspacesData} />
+			</SidebarHeader>
+			<SidebarContent>
+				<NavMain
+					userData={userData}
+					setUserData={setUserData}
+					userModulesAndPages={userModulesAndPagesData}
+					activeWorkspaceIdAndName={activeWorkspaceIdAndName}
+					activeModuleIdAndName={activeModuleIdAndName}
+					setActiveModuleIdAndName={setActiveModuleIdAndName}
+					activePageIdAndName={activePageIdAndName}
+					setActivePageIdAndName={setActivePageIdAndName}
+				/>
+			</SidebarContent>
+			<SidebarFooter>
+				<NavUser />
+			</SidebarFooter>
+			<SidebarRail />
+		</Sidebar>
+	);
 }
