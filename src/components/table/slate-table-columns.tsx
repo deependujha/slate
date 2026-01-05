@@ -4,10 +4,19 @@
 import { ColumnDef, Column, Row } from "@tanstack/react-table";
 import { SlateRow } from "./dummy-table-data";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const columns: ColumnDef<SlateRow>[] = [
+const STATUS_STYLES = {
+	open: "bg-sky-500/10 text-sky-400 border border-sky-500/20",
+	blocked: "bg-rose-500/10 text-rose-400 border border-rose-500/25",
+	merged: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+	closed: "bg-neutral-500/10 text-neutral-400 border border-neutral-500/20",
+} as const;
+
+export const createColumns = (
+	onDelete: (id: string) => void
+): ColumnDef<SlateRow>[] => [
 	{
 		accessorKey: "title",
 		header: ({ column }: { column: Column<SlateRow> }) => (
@@ -53,16 +62,12 @@ export const columns: ColumnDef<SlateRow>[] = [
 		header: "Status",
 		cell: ({ row }: { row: Row<SlateRow> }) => {
 			const status = row.original.status;
-			const color =
-				status === "open"
-					? "bg-blue-500"
-					: status === "blocked"
-						? "bg-red-500"
-						: status === "merged"
-							? "bg-green-500"
-							: "bg-neutral-400";
 
-			return <span className={`px-2 py-1 rounded text-white text-xs ${color}`}>{status}</span>;
+			return (
+				<span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_STYLES[status]}`}>
+					{status}
+				</span>
+			);
 		},
 	},
 
@@ -75,14 +80,23 @@ export const columns: ColumnDef<SlateRow>[] = [
 	},
 
 	{
-		accessorKey: "date",
-		header: "Date",
-		sortingFn: "datetime",
-	},
-
-	{
 		accessorKey: "extra",
 		header: "Extra",
 		cell: ({ row }: { row: Row<SlateRow> }) => row.original.extra ?? "—",
+	},
+
+	{
+		id: "actions",
+		header: "Actions",
+		cell: ({ row }: { row: Row<SlateRow> }) => (
+			<Button
+				variant="ghost"
+				size="sm"
+				onClick={() => onDelete(row.original.id)}
+				className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+			>
+				<Trash2 className="h-4 w-4" />
+			</Button>
+		),
 	},
 ];

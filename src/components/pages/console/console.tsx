@@ -1,4 +1,5 @@
 "use client";
+
 import { AppSidebar } from "@/components/navigation_tabs/app-sidebar";
 import { SlateTable } from "@/components/table/slate-table";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -7,10 +8,7 @@ import {
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { EntityIdentifierType, UserDataType } from "@/constants/types";
 import { useEffect, useState } from "react";
@@ -33,29 +31,29 @@ export function ConsolePage() {
 			try {
 				const res = await fetch("/api/workspaces");
 				const data = await res.json();
-				if (res.ok) {
-					if (data.workspaces.length > 0) {
-						setUserData(data);
-						setActiveWorkspaceIdAndName({
-							id: data.workspaces[0].id,
-							name: data.workspaces[0].name,
-						});
-						if (data.workspaces[0].modules.length > 0) {
-							setActiveModuleIdAndName({
-								id: data.workspaces[0].modules[0].id,
-								name: data.workspaces[0].modules[0].name,
-							});
-						}
-					} else {
-						toast.error("No workspaces, modules, or pages found.");
-					}
-				} else {
-					console.error("Error fetching workspaces:", data.error);
-					toast.error("Failed to fetch workspaces.");
+
+				if (!res.ok) {
+					throw new Error(data.error || "Failed to fetch workspaces");
 				}
-			} catch (error) {
-				toast.error("Failed to fetch workspaces.");
-				console.error("Error fetching workspaces:", error);
+
+				if (data.workspaces.length === 0) {
+					throw new Error("No workspaces found");
+				}
+
+				setUserData(data);
+
+				const ws = data.workspaces[0];
+				setActiveWorkspaceIdAndName({ id: ws.id, name: ws.name });
+
+				if (ws.modules.length > 0) {
+					setActiveModuleIdAndName({
+						id: ws.modules[0].id,
+						name: ws.modules[0].name,
+					});
+				}
+			} catch (err) {
+				console.error(err);
+				toast.error("Failed to load data");
 			} finally {
 				setLoading(false);
 			}
@@ -65,14 +63,12 @@ export function ConsolePage() {
 	}, []);
 
 	if (loading) {
-		return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+		return <div className="flex min-h-screen items-center justify-center">Loading…</div>;
 	}
 
-	if (!userData || userData.workspaces.length === 0) {
+	if (!userData) {
 		return (
-			<div className="flex min-h-screen items-center justify-center">
-				An error occurred. Please try again later or contact support.
-			</div>
+			<div className="flex min-h-screen items-center justify-center">Something went wrong.</div>
 		);
 	}
 
@@ -88,30 +84,28 @@ export function ConsolePage() {
 				activePageIdAndName={activePageIdAndName}
 				setActivePageIdAndName={setActivePageIdAndName}
 			/>
-			<SidebarInset>
+
+			{/* ⬇️ IMPORTANT: full-height column layout */}
+			<SidebarInset className="flex flex-col h-screen">
+				{/* Header (fixed) */}
 				<header className="flex h-14 shrink-0 items-center border-b">
-					<div className="flex w-full items-center justify-between px-4 gap-2">
+					<div className="flex w-full items-center justify-between px-4">
 						<div className="flex items-center gap-2">
 							<SidebarTrigger className="-ml-1" />
-
 							<Breadcrumb>
 								<BreadcrumbList>
-									<BreadcrumbItem className="hidden md:block">
+									<BreadcrumbItem>
 										<BreadcrumbLink href="#">slate</BreadcrumbLink>
 									</BreadcrumbItem>
-									{/* <BreadcrumbSeparator className="hidden md:block" />
-                                    <BreadcrumbItem>
-                                        <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                                    </BreadcrumbItem> */}
 								</BreadcrumbList>
 							</Breadcrumb>
 						</div>
-
 						<ThemeToggle />
 					</div>
 				</header>
 
-				<div className="flex flex-1 flex-col gap-4 p-4 pt-4">
+				{/* ⬇️ Scroll boundary lives HERE */}
+				<div className="flex-1 min-h-0 overflow-hidden p-4">
 					<SlateTable />
 				</div>
 			</SidebarInset>
