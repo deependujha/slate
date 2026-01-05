@@ -186,9 +186,9 @@ export function NavMain({
 											{module.pages.map((page) => (
 												<SidebarMenuSubItem key={page.name} className="group/page">
 													<SidebarMenuSubButton asChild>
-														<button className="flex items-center gap-2">
+														<div className="flex items-center gap-2">
 															<span className="flex-1 truncate">{page.name}</span>
-															<span className="w-8 flex justify-end">
+															{/* <span className="w-8 flex justify-end">
 																<span
 																	role="button"
 																	tabIndex={0}
@@ -205,8 +205,8 @@ export function NavMain({
 																>
 																	<MdDelete size={14} />
 																</span>
-															</span>
-														</button>
+															</span> */}
+														</div>
 													</SidebarMenuSubButton>
 												</SidebarMenuSubItem>
 											))}
@@ -244,7 +244,7 @@ export function NavMain({
 							setUserData,
 							activeWorkspaceIdAndName,
 							activeModuleIdAndName,
-              activePageIdAndName,
+							activePageIdAndName,
 							closeModal: () => setModalOpen(false),
 						})
 					: null}
