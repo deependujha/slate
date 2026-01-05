@@ -1,5 +1,6 @@
 "use client";
 import { AppSidebar } from "@/components/navigation_tabs/app-sidebar";
+import { SlateTable } from "@/components/table/slate-table";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
 	Breadcrumb,
@@ -89,7 +90,7 @@ export function ConsolePage() {
 			/>
 			<SidebarInset>
 				<header className="flex h-14 shrink-0 items-center border-b">
-					<div className="flex w-full items-center justify-between px-4">
+					<div className="flex w-full items-center justify-between px-4 gap-2">
 						<div className="flex items-center gap-2">
 							<SidebarTrigger className="-ml-1" />
 
@@ -110,13 +111,8 @@ export function ConsolePage() {
 					</div>
 				</header>
 
-				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-					<div className="grid auto-rows-min gap-4 md:grid-cols-3">
-						<div className="bg-muted/50 aspect-video rounded-xl" />
-						<div className="bg-muted/50 aspect-video rounded-xl" />
-						<div className="bg-muted/50 aspect-video rounded-xl" />
-					</div>
-					<div className="bg-muted/50 min-h-screen flex-1 rounded-xl md:min-h-min" />
+				<div className="flex flex-1 flex-col gap-4 p-4 pt-4">
+					<SlateTable />
 				</div>
 			</SidebarInset>
 		</SidebarProvider>
